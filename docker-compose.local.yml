@@ -1,0 +1,25 @@
+version: '3'
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    command: ['nginx-debug', '-g', 'daemon off;']
+    volumes:
+      - ./deploy/test/nginx.conf:/etc/nginx/nginx.conf
+      - ./tmp/downloads:/tmp/downloads/:ro
+    ports:
+      - '8443:8443'
+    links:
+      - bot
+  bot:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+    container_name: bot
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./deploy/test/.env:/src/.env:ro
+      - ./tmp/downloads/:/tmp/downloads/:rw
+      - ./tmp/bot/persistence/:/tmp/bot/persistence/:rw
+      - ./tmp/instaloader/:/tmp/instaloader/:ro

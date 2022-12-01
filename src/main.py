@@ -30,8 +30,6 @@ from telegram.ext import (
     PicklePersistence,
 )
 
-from src.login import make_login_conversation_handler
-
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
@@ -162,7 +160,6 @@ if __name__ == '__main__':
         .persistence(persistence) \
         .build()
 
-    app.add_handler(make_login_conversation_handler())
     app.add_handler(InlineQueryHandler(inline_query_handler))
 
     app.run_webhook(
