@@ -17,6 +17,5 @@ services:
       context: .
       dockerfile: deploy/Dockerfile
     container_name: auth
-    command: ["instaloader -l amaprograma -f /tmp/instaloader/session-amaprograma"]
     volumes:
       - /tmp/instaloader/:/tmp/instaloader/:rw

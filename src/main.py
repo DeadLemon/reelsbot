@@ -88,8 +88,7 @@ async def inline_query_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 def get_reel_shortcode_from_string(raw: str) -> Optional[str]:
     try:
         split = parse.urlsplit(raw)
-    except Exception as e:
-        print(e)
+    except Exception:
         return None
 
     if split.netloc not in ('www.instagram.com', 'instagram.com'):
