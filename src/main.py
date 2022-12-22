@@ -18,6 +18,7 @@ from instaloader import (
     Instaloader,
     Post,
 )
+from sentry_sdk import capture_exception
 from telegram import (
     InlineQueryResultCachedVideo,
     InlineQueryResultVideo,
@@ -108,7 +109,8 @@ async def download_reel(executor: ThreadPoolExecutor, loader_: Instaloader, shor
         post = Post.from_shortcode(loader_.context, shortcode)
         try:
             loader_.download_post(post, path)
-        except BadResponseException:
+        except Exception as e:
+            capture_exception(e)
             return None, None
 
         files: List[str] = os.listdir(path)
