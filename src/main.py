@@ -66,7 +66,7 @@ async def inline_query_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 mime_type='video/mp4',
                 thumb_url=info.thumbnail_url,
                 title=info.title or c.media_code_from_pk(pk),
-                caption=info.caption_text,
+                # caption=info.caption_text,
 
             )
         ],
