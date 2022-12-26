@@ -67,7 +67,9 @@ async def inline_query_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 thumb_url=info.thumbnail_url,
                 title=info.title or c.media_code_from_pk(pk),
                 # caption=info.caption_text,
-
+                video_duration=int(float(info.video_duration)),
+                video_width=1080,
+                video_height=1920,
             )
         ],
         is_personal=True,
