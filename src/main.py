@@ -1,26 +1,14 @@
 import logging
 import os
 import uuid
-from asyncio import wrap_future
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import (
-    List,
-    Optional,
-    Tuple,
-)
-from urllib import parse
 
-import sentry_sdk
+import instagrapi as ig
+import sentry_sdk as ss
 from dotenv import load_dotenv
-from instaloader import (
-    BadResponseException,
-    Instaloader,
-    Post,
-)
 from sentry_sdk import capture_exception
 from telegram import (
-    InlineQueryResultCachedVideo,
     InlineQueryResultVideo,
     Update,
 )
@@ -32,13 +20,18 @@ from telegram.ext import (
     PicklePersistence,
 )
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(name)s %(message)s'
+)
+
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
 
 
 async def inline_query_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.inline_query.query
     if query == '':
+        await update.inline_query.answer([], is_personal=True, cache_time=0)
         return
 
     log.info(
@@ -48,38 +41,33 @@ async def inline_query_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         update.inline_query.query,
     )
 
-    shortcode = get_reel_shortcode_from_string(query)
-    if not shortcode:
-        log.info('failed to get reel shortcode from query: %s', update.inline_query.query)
-        return
-
-    if video_file_id := context.bot_data.get(shortcode):
-        log.info('returning video from in-memory cache: %s', video_file_id)
-        await update.inline_query.answer(
-            [
-                InlineQueryResultCachedVideo(
-                    id=str(uuid.uuid4()),
-                    video_file_id=video_file_id,
-                    title=shortcode,
-                ),
-            ],
-            is_personal=True,
-            cache_time=0,
+    try:
+        pk = c.media_pk_from_url(query)
+        info = c.media_info(pk, use_cache=True)
+        # video = c.video_download(pk, folder=downloads_path)
+    except Exception as e:
+        capture_exception(e)
+        log.info(
+            'inline query failed, user_id=%s, username=%s, query=%s: %s',
+            update.effective_user.id,
+            update.effective_user.username,
+            update.inline_query.query,
+            e,
         )
-        return
-
-    video, thumb = await download_reel(executor, loader, shortcode)
-    if not video:
+        await update.inline_query.answer([], is_personal=True, cache_time=0)
         return
 
     await update.inline_query.answer(
         [
             InlineQueryResultVideo(
                 id=str(uuid.uuid4()),
-                video_url='/'.join([bot_url, video.as_posix()]),
+                # video_url='/'.join([bot_url, video.as_posix()]),
+                video_url=info.video_url,
                 mime_type='video/mp4',
-                thumb_url='/'.join([bot_url, thumb.as_posix()]) if thumb else None,
-                title=shortcode,
+                thumb_url=info.thumbnail_url,
+                title=info.title or c.media_code_from_pk(pk),
+                caption=info.caption_text,
+
             )
         ],
         is_personal=True,
@@ -87,74 +75,39 @@ async def inline_query_handler(update: Update, context: ContextTypes.DEFAULT_TYP
     )
 
 
-def get_reel_shortcode_from_string(raw: str) -> Optional[str]:
-    try:
-        split = parse.urlsplit(raw)
-    except Exception:
-        return None
-
-    if split.netloc not in ('www.instagram.com', 'instagram.com'):
-        return None
-
-    if not split.path.startswith('/reel/'):
-        return None
-
-    return split.path.lstrip('/reel/').rstrip('/')
-
-
-async def download_reel(executor: ThreadPoolExecutor, loader_: Instaloader, shortcode: str):
-    path = Path(downloads_path, 'reels', shortcode)
-
-    def inner() -> Tuple[Optional[Path], Optional[Path]]:
-        post = Post.from_shortcode(loader_.context, shortcode)
-        try:
-            loader_.download_post(post, path)
-        except Exception as e:
-            capture_exception(e)
-            return None, None
-
-        files: List[str] = os.listdir(path)
-
-        video: Optional[Path] = next((Path(path, file) for file in files if file.endswith('.mp4')), None)
-        thumb: Optional[Path] = next((Path(path, file) for file in files if file.endswith('.jpg')), None)
-
-        if not video:
-            return None, None
-
-        return video, thumb
-
-    return await wrap_future(executor.submit(inner))
-
-
 if __name__ == '__main__':
     load_dotenv()
 
     if sentry_dsn := os.getenv('SENTRY_DSN'):
-        sentry_sdk.init(
+        ss.init(
             dsn=sentry_dsn,
             traces_sample_rate=1.0
         )
 
     session_username = os.getenv('IG_SESSION_USERNAME')
-    session_filename = os.getenv('IG_SESSION_FILENAME')
-    downloads_path = os.getenv('IG_DOWNLOADS_PATH')
+    session_password = os.getenv('IG_SESSION_PASSWORD')
+    downloads_path = Path(
+        os.getenv('IG_DOWNLOADS_PATH'),
+        'reels',
+    )
 
-    loader = Instaloader()
-    loader.load_session_from_file(session_username, filename=session_filename)
+    log.info('creating instagram client...')
+    c = ig.Client(logger=log)
+    c.login(session_username, session_password, relogin=True)
+    log.info('successfully logged in')
 
-    executor = ThreadPoolExecutor()
+    executor = ThreadPoolExecutor(max_workers=1)
 
     bot_url = os.getenv('BOT_URL')
     bot_token = os.getenv('BOT_TOKEN')
     bot_port = int(os.getenv('BOT_PORT'))
-    bot_persistence_path = os.getenv('BOT_PERSISTENCE_PATH')
-    bot_admin_user_id = int(os.getenv('BOT_ADMIN_USER_ID'))
+    bot_persistence_path = Path(
+        os.getenv('BOT_PERSISTENCE_PATH'),
+        'persistence.pickle',
+    )
 
     persistence = PicklePersistence(
-        filepath=Path(
-            bot_persistence_path,
-            'persistence.pickle',
-        ),
+        filepath=bot_persistence_path,
         store_data=PersistenceInput(
             bot_data=True,
             chat_data=False,
