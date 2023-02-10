@@ -16,8 +16,6 @@ from telegram.ext import (
     ApplicationBuilder,
     ContextTypes,
     InlineQueryHandler,
-    PersistenceInput,
-    PicklePersistence,
 )
 
 logging.basicConfig(
@@ -43,8 +41,7 @@ async def inline_query_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
     try:
         pk = c.media_pk_from_url(query)
-        info = c.media_info(pk, use_cache=True)
-        # video = c.video_download(pk, folder=downloads_path)
+        info = c.media_info_v1(pk)
     except Exception as e:
         capture_exception(e)
         log.info(
@@ -61,7 +58,6 @@ async def inline_query_handler(update: Update, context: ContextTypes.DEFAULT_TYP
         [
             InlineQueryResultVideo(
                 id=str(uuid.uuid4()),
-                # video_url='/'.join([bot_url, video.as_posix()]),
                 video_url=info.video_url,
                 mime_type='video/mp4',
                 thumb_url=info.thumbnail_url,
@@ -88,40 +84,25 @@ if __name__ == '__main__':
 
     session_username = os.getenv('IG_SESSION_USERNAME')
     session_password = os.getenv('IG_SESSION_PASSWORD')
+    session_settings_path = Path(os.getenv('IG_SESSION_SETTINGS_PATH'), '.settings')
 
-    log.info('creating instagram client...')
     c = ig.Client(logger=log)
 
-    c.login(session_username, session_password, relogin=False)
-    log.info('successfully logged in')
+    try:
+        settings = c.load_settings(session_settings_path)
+        c.login(session_username, session_password, relogin=False)
+    except FileNotFoundError:
+        c.login(session_username, session_password, relogin=False)
+        c.dump_settings(session_settings_path)
 
     executor = ThreadPoolExecutor(max_workers=1)
 
     bot_url = os.getenv('BOT_URL')
     bot_token = os.getenv('BOT_TOKEN')
     bot_port = int(os.getenv('BOT_PORT'))
-    bot_persistence_path = Path(
-        os.getenv('BOT_PERSISTENCE_PATH'),
-        'persistence.pickle',
-    )
 
-    persistence = PicklePersistence(
-        filepath=bot_persistence_path,
-        store_data=PersistenceInput(
-            bot_data=True,
-            chat_data=False,
-            user_data=False,
-            callback_data=False,
-        ),
-    )
-
-    app = ApplicationBuilder() \
-        .token(bot_token) \
-        .persistence(persistence) \
-        .build()
-
+    app = ApplicationBuilder().token(bot_token).build()
     app.add_handler(InlineQueryHandler(inline_query_handler))
-
     app.run_webhook(
         listen='0.0.0.0',
         port=bot_port,

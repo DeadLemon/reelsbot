@@ -6,7 +6,6 @@ services:
     command: [ 'nginx-debug', '-g', 'daemon off;' ]
     volumes:
       - ./deploy/test/nginx.conf:/etc/nginx/nginx.conf
-      - ./tmp/downloads:/tmp/downloads/:ro
     ports:
       - '8443:8443'
     links:
@@ -20,5 +19,4 @@ services:
       - '8080:8080'
     volumes:
       - ./deploy/test/.env:/src/.env:ro
-      - ./tmp/downloads/:/tmp/downloads/:rw
-      - ./tmp/bot/persistence/:/tmp/bot/persistence/:rw
+      - ./deploy/rest/.settings:/src/.env:ro
