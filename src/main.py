@@ -89,10 +89,11 @@ if __name__ == '__main__':
     c = ig.Client(logger=log)
 
     try:
-        settings = c.load_settings(session_settings_path)
+        c.load_settings(session_settings_path)
         c.login(session_username, session_password, relogin=False)
     except FileNotFoundError:
         c.login(session_username, session_password, relogin=False)
+    finally:
         c.dump_settings(session_settings_path)
 
     executor = ThreadPoolExecutor(max_workers=1)
