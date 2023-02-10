@@ -9,4 +9,4 @@ services:
       - '8443:8443'
     volumes:
       - /var/deploy/prod/.env:/src/.env:ro
-      - /var/deploy/prod/.settings:/src/.settings:rw
+      - /var/deploy/prod/.settings:/var/deploy/prod/.settings
