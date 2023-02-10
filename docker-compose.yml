@@ -8,7 +8,6 @@ services:
     ports:
       - '8443:8443'
     volumes:
-      - /tmp/deploy/prod/.env:/src/.env:ro
+      - /var/deploy/prod/.env:/src/.env:ro
       - /tmp/downloads/:/tmp/downloads/:rw
       - /tmp/bot/persistence/:/tmp/bot/persistence/:rw
-      - /tmp/instaloader/:/tmp/instaloader/:rw

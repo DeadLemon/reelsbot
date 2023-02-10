@@ -3,7 +3,7 @@ services:
   nginx:
     image: nginx:alpine
     container_name: nginx
-    command: ['nginx-debug', '-g', 'daemon off;']
+    command: [ 'nginx-debug', '-g', 'daemon off;' ]
     volumes:
       - ./deploy/test/nginx.conf:/etc/nginx/nginx.conf
       - ./tmp/downloads:/tmp/downloads/:ro
@@ -22,4 +22,3 @@ services:
       - ./deploy/test/.env:/src/.env:ro
       - ./tmp/downloads/:/tmp/downloads/:rw
       - ./tmp/bot/persistence/:/tmp/bot/persistence/:rw
-      - ./tmp/instaloader/:/tmp/instaloader/:ro
