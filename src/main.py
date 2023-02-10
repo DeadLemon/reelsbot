@@ -92,11 +92,6 @@ if __name__ == '__main__':
     log.info('creating instagram client...')
     c = ig.Client(logger=log)
 
-    c.set_country('NL')
-    c.set_country_code(31)
-    c.set_locale('ru_RU')
-    c.set_timezone_offset(3600)
-
     c.login(session_username, session_password, relogin=True)
     log.info('successfully logged in')
 
