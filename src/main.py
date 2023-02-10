@@ -92,8 +92,8 @@ if __name__ == '__main__':
     log.info('creating instagram client...')
     c = ig.Client(logger=log)
 
-    # c.login(session_username, session_password, relogin=True)
-    # log.info('successfully logged in')
+    c.login(session_username, session_password, relogin=False)
+    log.info('successfully logged in')
 
     executor = ThreadPoolExecutor(max_workers=1)
 
