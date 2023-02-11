@@ -12,6 +12,7 @@ python-dotenv = "^0.21.1"
 sentry-sdk = "^1.15.0"
 instagrapi = "^1.16.31"
 pillow = "^9.4.0"
+pytube = "^12.1.2"
 
 
 [tool.poetry.group.dev.dependencies]

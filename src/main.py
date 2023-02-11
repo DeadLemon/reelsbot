@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -7,6 +8,7 @@ from pathlib import Path
 import instagrapi as ig
 import sentry_sdk as ss
 from dotenv import load_dotenv
+from pytube import YouTube
 from sentry_sdk import capture_exception
 from telegram import (
     InlineQueryResultVideo,
@@ -26,26 +28,21 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-async def inline_query_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.inline_query.query
-    if query == '':
-        await update.inline_query.answer([], is_personal=True, cache_time=0)
-        return
-
+async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT_TYPE):
     log.info(
-        'inline query received, user_id=%s, username=%s, query=%s',
+        'instagram inline query received, user_id=%s, username=%s, query=%s',
         update.effective_user.id,
         update.effective_user.username,
         update.inline_query.query,
     )
 
     try:
-        pk = c.media_pk_from_url(query)
+        pk = c.media_pk_from_url(update.inline_query.query)
         info = c.media_info_v1(pk)
     except Exception as e:
         capture_exception(e)
         log.info(
-            'inline query failed, user_id=%s, username=%s, query=%s: %s',
+            'instagram inline query failed, user_id=%s, username=%s, query=%s: %s',
             update.effective_user.id,
             update.effective_user.username,
             update.inline_query.query,
@@ -66,6 +63,48 @@ async def inline_query_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 video_duration=int(float(info.video_duration)),
                 video_width=1080,
                 video_height=1920,
+            )
+        ],
+        is_personal=True,
+        cache_time=0,
+    )
+
+
+async def youtube_inline_query_handler(update: Update, _: ContextTypes.DEFAULT_TYPE):
+    log.info(
+        'youtube inline query received, user_id=%s, username=%s, query=%s',
+        update.effective_user.id,
+        update.effective_user.username,
+        update.inline_query.query,
+    )
+    try:
+        yt = YouTube(update.inline_query.query)
+        stream = yt.streams.filter().get_highest_resolution()
+        video_url = stream.url
+    except Exception as e:
+        capture_exception(e)
+        log.info(
+            'youtube inline query failed, user_id=%s, username=%s, query=%s: %s',
+            update.effective_user.id,
+            update.effective_user.username,
+            update.inline_query.query,
+            e,
+        )
+        await update.inline_query.answer([], is_personal=True, cache_time=0)
+        return
+
+    await update.inline_query.answer(
+        [
+            InlineQueryResultVideo(
+                id=str(uuid.uuid4()),
+                video_url=video_url,
+                mime_type=stream.mime_type,
+                thumb_url=yt.thumbnail_url,
+                title=yt.title,
+                # caption=info.caption_text,
+                video_duration=yt.length,
+                # video_width=1080,
+                # video_height=1920,
             )
         ],
         is_personal=True,
@@ -103,7 +142,18 @@ if __name__ == '__main__':
     bot_port = int(os.getenv('BOT_PORT'))
 
     app = ApplicationBuilder().token(bot_token).build()
-    app.add_handler(InlineQueryHandler(inline_query_handler))
+    app.add_handler(
+        InlineQueryHandler(
+            instagram_inline_query_handler,
+            pattern=re.compile(r".*instagram\.com/reels.*"),
+        )
+    )
+    app.add_handler(
+        InlineQueryHandler(
+            youtube_inline_query_handler,
+            pattern=re.compile(r".*youtube\.com/shorts.*"),
+        )
+    )
     app.run_webhook(
         listen='0.0.0.0',
         port=bot_port,
