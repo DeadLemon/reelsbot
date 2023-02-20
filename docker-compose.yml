@@ -9,4 +9,4 @@ services:
       - '8443:8443'
     volumes:
       - /var/config/.env:/src/.env:ro
-      - /var/config//:/var/deploy/settings/
+      - /var/config/settings.json:/var/deploy/settings.json
