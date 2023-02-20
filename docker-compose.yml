@@ -8,5 +8,9 @@ services:
     ports:
       - '8443:8443'
     volumes:
-      - /var/config/prod.env:/src/.env:ro
-      - /var/config/settings.json:/var/deploy/settings.json
+      - type: bind
+        source: /var/reelsbot/.env
+        target: /src/.env:ro
+      - type: bind
+        source: /var/reelsbot/settings.json
+        target: /var/reelsbot/settings.json
