@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import re
@@ -127,8 +128,10 @@ if __name__ == '__main__':
     c = ig.Client(logger=log)
 
     if os.path.exists(session_settings_path):
-        c.load_settings(session_settings_path)
-        c.login(session_username, session_password)
+        try:
+            c.load_settings(session_settings_path)
+        except json.JSONDecodeError:
+            c.login(session_username, session_password)
     else:
         c.login(session_username, session_password)
         c.dump_settings(session_settings_path)
