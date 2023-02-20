@@ -8,5 +8,5 @@ services:
     ports:
       - '8443:8443'
     volumes:
-      - /var/config/.env:/src/.env:ro
+      - /var/config/prod.env:/src/.env:ro
       - /var/config/settings.json:/var/deploy/settings.json
