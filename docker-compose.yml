@@ -10,7 +10,7 @@ services:
     volumes:
       - type: bind
         source: /var/reelsbot/.env
-        target: /src/.env:ro
+        target: /src/.env
       - type: bind
         source: /var/reelsbot/settings.json
         target: /var/reelsbot/settings.json
