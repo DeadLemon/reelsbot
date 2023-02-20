@@ -2,7 +2,6 @@ import logging
 import os
 import re
 import uuid
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import instagrapi as ig
@@ -121,21 +120,18 @@ if __name__ == '__main__':
             traces_sample_rate=1.0
         )
 
-    session_username = os.getenv('IG_SESSION_USERNAME')
-    session_password = os.getenv('IG_SESSION_PASSWORD')
-    session_settings_path = Path(os.getenv('IG_SESSION_SETTINGS_PATH'), '.settings')
+    session_username = os.getenv('IG_USERNAME')
+    session_password = os.getenv('IG_PASSWORD')
+    session_settings_path = Path(os.getenv('IG_SETTINGS_PATH'))
 
     c = ig.Client(logger=log)
 
-    try:
+    if os.path.exists(session_settings_path):
         c.load_settings(session_settings_path)
-        c.login(session_username, session_password, relogin=False)
-    except FileNotFoundError:
-        c.login(session_username, session_password, relogin=False)
-    finally:
+        c.login(session_username, session_password)
+    else:
+        c.login(session_username, session_password)
         c.dump_settings(session_settings_path)
-
-    executor = ThreadPoolExecutor(max_workers=1)
 
     bot_url = os.getenv('BOT_URL')
     bot_token = os.getenv('BOT_TOKEN')
