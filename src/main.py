@@ -6,6 +6,7 @@ import uuid
 from pathlib import Path
 
 import instagrapi as ig
+from instagrapi import exceptions as igexc
 import sentry_sdk as ss
 from dotenv import load_dotenv
 from pytube import YouTube
@@ -112,6 +113,12 @@ async def youtube_inline_query_handler(update: Update, _: ContextTypes.DEFAULT_T
     )
 
 
+def handle_exception(client: ig.Client, exc: Exception):
+    if isinstance(exc, igexc.LoginRequired):
+        client.relogin()
+        client.dump_settings(session_settings_path)
+
+
 if __name__ == '__main__':
     load_dotenv()
 
@@ -126,6 +133,7 @@ if __name__ == '__main__':
     session_settings_path = Path(os.getenv('IG_SETTINGS_PATH'))
 
     c = ig.Client(logger=log)
+    c.handle_exception = handle_exception
 
     if os.path.exists(session_settings_path):
         try:
