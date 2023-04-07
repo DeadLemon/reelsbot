@@ -138,6 +138,7 @@ if __name__ == '__main__':
     if os.path.exists(session_settings_path):
         try:
             c.load_settings(session_settings_path)
+            c.login(session_username, session_password)
         except json.JSONDecodeError:
             c.login(session_username, session_password)
     else:
