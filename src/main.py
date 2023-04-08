@@ -116,8 +116,6 @@ def handle_exception(client: ig.Client, exc: Exception):
             client.set_settings({})
             client.login(session_username, session_password)
         client.dump_settings(session_settings_path)
-    elif isinstance(exc, igexc.ClientError):
-
 
 
 if __name__ == '__main__':
