@@ -109,7 +109,7 @@ async def youtube_inline_query_handler(update: Update, _: ContextTypes.DEFAULT_T
 
 
 def handle_exception(client: ig.Client, exc: Exception):
-    if isinstance(exc, (igexc.ClientError, igexc.LoginRequired)):
+    if isinstance(exc, igexc.LoginRequired):
         try:
             client.relogin()
         except igexc.ReloginAttemptExceeded:
@@ -141,7 +141,12 @@ if __name__ == '__main__':
             ...
 
     c.login(session_username, session_password)
-    c.get_timeline_feed()
+    try:
+        c.get_timeline_feed()
+    except igexc.ClientError:
+        c.set_settings({})
+        c.login(session_username, session_password)
+        c.dump_settings(session_settings_path)
 
     bot_url = os.getenv('BOT_URL')
     bot_token = os.getenv('BOT_TOKEN')
