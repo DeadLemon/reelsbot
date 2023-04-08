@@ -6,9 +6,9 @@ import uuid
 from pathlib import Path
 
 import instagrapi as ig
-from instagrapi import exceptions as igexc
 import sentry_sdk as ss
 from dotenv import load_dotenv
+from instagrapi import exceptions as igexc
 from pytube import YouTube
 from sentry_sdk import capture_exception
 from telegram import (
@@ -40,14 +40,12 @@ async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT
     try:
         pk = c.media_pk_from_url(update.inline_query.query)
         info = c.media_info_v1(pk)
-    except Exception as e:
-        capture_exception(e)
-        log.info(
+    except Exception:
+        log.exception(
             'instagram inline query failed, user_id=%s, username=%s, query=%s: %s',
             update.effective_user.id,
             update.effective_user.username,
             update.inline_query.query,
-            e,
         )
         await update.inline_query.answer([], is_personal=True, cache_time=0)
         return
@@ -82,14 +80,12 @@ async def youtube_inline_query_handler(update: Update, _: ContextTypes.DEFAULT_T
         yt = YouTube(update.inline_query.query)
         stream = yt.streams.filter().get_highest_resolution()
         video_url = stream.url
-    except Exception as e:
-        capture_exception(e)
-        log.info(
+    except Exception:
+        log.exception(
             'youtube inline query failed, user_id=%s, username=%s, query=%s: %s',
             update.effective_user.id,
             update.effective_user.username,
             update.inline_query.query,
-            e,
         )
         await update.inline_query.answer([], is_personal=True, cache_time=0)
         return
@@ -125,7 +121,7 @@ if __name__ == '__main__':
     if sentry_dsn := os.getenv('SENTRY_DSN'):
         ss.init(
             dsn=sentry_dsn,
-            traces_sample_rate=1.0
+            traces_sample_rate=1.0,
         )
 
     session_username = os.getenv('IG_USERNAME')

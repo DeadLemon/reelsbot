@@ -10,6 +10,6 @@ if __name__ == '__main__':
     session_password = getenv('IG_PASSWORD')
     session_settings_path = Path(getenv('IG_SETTINGS_PATH'))
     c = Client()
-    c.load_settings(session_settings_path)
+    # c.load_settings(session_settings_path)
     c.login(session_username, session_password)
     c.dump_settings(session_settings_path)
