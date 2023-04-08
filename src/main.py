@@ -10,7 +10,6 @@ import sentry_sdk as ss
 from dotenv import load_dotenv
 from instagrapi import exceptions as igexc
 from pytube import YouTube
-from sentry_sdk import capture_exception
 from telegram import (
     InlineQueryResultVideo,
     Update,
@@ -117,6 +116,8 @@ def handle_exception(client: ig.Client, exc: Exception):
             client.set_settings({})
             client.login(session_username, session_password)
         client.dump_settings(session_settings_path)
+    elif isinstance(exc, igexc.ClientError):
+
 
 
 if __name__ == '__main__':
@@ -138,12 +139,11 @@ if __name__ == '__main__':
     if os.path.exists(session_settings_path):
         try:
             c.load_settings(session_settings_path)
-            c.login(session_username, session_password)
         except json.JSONDecodeError:
-            c.login(session_username, session_password)
-    else:
-        c.login(session_username, session_password)
-        c.dump_settings(session_settings_path)
+            ...
+
+    c.login(session_username, session_password)
+    c.get_timeline_feed()
 
     bot_url = os.getenv('BOT_URL')
     bot_token = os.getenv('BOT_TOKEN')
