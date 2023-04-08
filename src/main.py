@@ -111,11 +111,11 @@ async def youtube_inline_query_handler(update: Update, _: ContextTypes.DEFAULT_T
 
 def handle_exception(client: ig.Client, exc: Exception):
     if isinstance(exc, igexc.LoginRequired):
-        client.relogin()
-        client.dump_settings(session_settings_path)
-    elif isinstance(exc, igexc.ReloginAttemptExceeded):
-        client.set_settings({})
-        client.login(session_username, session_password)
+        try:
+            client.relogin()
+        except igexc.ReloginAttemptExceeded:
+            client.set_settings({})
+            client.login(session_username, session_password)
         client.dump_settings(session_settings_path)
 
 
