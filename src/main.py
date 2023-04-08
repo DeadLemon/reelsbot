@@ -42,7 +42,7 @@ async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT
         info = c.media_info_v1(pk)
     except Exception:
         log.exception(
-            'instagram inline query failed, user_id=%s, username=%s, query=%s: %s',
+            'instagram inline query failed, user_id=%s, username=%s, query=%s',
             update.effective_user.id,
             update.effective_user.username,
             update.inline_query.query,
@@ -82,7 +82,7 @@ async def youtube_inline_query_handler(update: Update, _: ContextTypes.DEFAULT_T
         video_url = stream.url
     except Exception:
         log.exception(
-            'youtube inline query failed, user_id=%s, username=%s, query=%s: %s',
+            'youtube inline query failed, user_id=%s, username=%s, query=%s',
             update.effective_user.id,
             update.effective_user.username,
             update.inline_query.query,
