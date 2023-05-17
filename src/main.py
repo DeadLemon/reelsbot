@@ -1,7 +1,9 @@
 import json
 import logging
 import os
+import random
 import re
+import string
 import uuid
 from pathlib import Path
 
@@ -118,6 +120,13 @@ def handle_exception(client: ig.Client, exc: Exception):
         client.dump_settings(session_settings_path)
 
 
+def change_password_handler(_username: str) -> str:
+    return ''.join([
+        random.choice(string.ascii_letters+string.digits)
+        for _ in range(10)
+    ])
+
+
 if __name__ == '__main__':
     load_dotenv()
 
@@ -133,6 +142,7 @@ if __name__ == '__main__':
 
     c = ig.Client(logger=log)
     c.handle_exception = handle_exception
+    c.change_password_handler = change_password_handler
 
     if os.path.exists(session_settings_path):
         try:
