@@ -7,10 +7,10 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-python-telegram-bot = {version = "20.1", extras = ["webhooks"]}
+python-telegram-bot = {version = "20.3", extras = ["webhooks"]}
 python-dotenv = "^0.21.1"
-sentry-sdk = "^1.17.0"
-instagrapi = "^1.17.1"
+sentry-sdk = "^1.23.1"
+instagrapi = "^1.17.10"
 pillow = "^9.4.0"
 pytube = "^12.1.2"
 
