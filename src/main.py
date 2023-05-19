@@ -1,4 +1,5 @@
 import imaplib
+import json
 import logging
 import os
 import random
@@ -139,7 +140,7 @@ def login(
 ):
     try:
         session = c.load_settings(session_settings_path)
-    except FileNotFoundError:
+    except (FileNotFoundError, json.JSONDecodeError):
         session = None
 
     if session:
