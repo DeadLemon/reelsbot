@@ -1,4 +1,4 @@
-import json
+import imaplib
 import logging
 import os
 import random
@@ -115,16 +115,48 @@ def handle_exception(client: ig.Client, exc: Exception):
         try:
             client.relogin()
         except igexc.ReloginAttemptExceeded:
+            old = client.get_settings()
             client.set_settings({})
+            client.set_uuids(old['uuids'])
             client.login(session_username, session_password)
         client.dump_settings(session_settings_path)
 
 
 def change_password_handler(_username: str) -> str:
-    return ''.join([
-        random.choice(string.ascii_letters+string.digits)
-        for _ in range(10)
-    ])
+    return ''.join(
+        [
+            random.choice(string.ascii_letters + string.digits)
+            for _ in range(10)
+        ]
+    )
+
+
+def login(
+        client: ig.Client,
+        session_username: str,
+        session_password: str,
+        session_settings_path: Path,
+):
+    try:
+        session = c.load_settings(session_settings_path)
+    except FileNotFoundError:
+        session = None
+
+    if session:
+        client.set_settings(session)
+        try:
+            client.get_timeline_feed()
+        except igexc.LoginRequired:
+            old_session = client.get_settings()
+            client.set_settings({})
+            client.set_uuids(old_session['uuids'])
+            client.login(session_username, session_password)
+            client.dump_settings(session_settings_path)
+
+        return
+
+    client.login(session_username, session_password)
+    client.dump_settings(session_settings_path)
 
 
 if __name__ == '__main__':
@@ -141,22 +173,7 @@ if __name__ == '__main__':
     session_settings_path = Path(os.getenv('IG_SETTINGS_PATH'))
 
     c = ig.Client(logger=log)
-    c.handle_exception = handle_exception
-    c.change_password_handler = change_password_handler
-
-    if os.path.exists(session_settings_path):
-        try:
-            c.load_settings(session_settings_path)
-        except json.JSONDecodeError:
-            ...
-
-    c.login(session_username, session_password)
-    try:
-        c.get_timeline_feed()
-    except igexc.ClientError:
-        c.set_settings({})
-        c.login(session_username, session_password)
-        c.dump_settings(session_settings_path)
+    login(c, session_username, session_password, session_settings_path)
 
     bot_url = os.getenv('BOT_URL')
     bot_token = os.getenv('BOT_TOKEN')
