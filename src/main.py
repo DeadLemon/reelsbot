@@ -1,4 +1,3 @@
-import imaplib
 import json
 import logging
 import os
@@ -24,16 +23,16 @@ from telegram.ext import (
 )
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s %(levelname)s %(name)s %(message)s'
+    level=logging.WARNING,
+    format='%(asctime)s %(levelname)s %(name)s %(message)s',
 )
 
 log = logging.getLogger(__name__)
 
 
 async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT_TYPE):
-    log.info(
-        'instagram inline query received, user_id=%s, username=%s, query=%s',
+    log.warning(
+        '[instagram][%s][%s] inline query received: %s',
         update.effective_user.id,
         update.effective_user.username,
         update.inline_query.query,
@@ -44,7 +43,7 @@ async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT
         info = c.media_info_v1(pk)
     except Exception:
         log.exception(
-            'instagram inline query failed, user_id=%s, username=%s, query=%s',
+            '[instagram][%s][%s] inline query failed: %s',
             update.effective_user.id,
             update.effective_user.username,
             update.inline_query.query,
@@ -58,7 +57,7 @@ async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT
                 id=str(uuid.uuid4()),
                 video_url=info.video_url,
                 mime_type='video/mp4',
-                thumb_url=info.thumbnail_url,
+                thumbnail_url=info.thumbnail_url,
                 title=info.title or c.media_code_from_pk(pk),
                 # caption=info.caption_text,
                 video_duration=int(float(info.video_duration)),
