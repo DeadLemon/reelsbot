@@ -172,7 +172,7 @@ if __name__ == '__main__':
     session_password = os.getenv('IG_PASSWORD')
     session_settings_path = Path(os.getenv('IG_SETTINGS_PATH'))
 
-    c = ig.Client(logger=log)
+    c = ig.Client(logger=log, delay_range=[1, 5])
     login(c, session_username, session_password, session_settings_path)
 
     bot_url = os.getenv('BOT_URL')
