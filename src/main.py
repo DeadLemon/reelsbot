@@ -162,7 +162,7 @@ if __name__ == '__main__':
 
     c = ig.Client(logger=log, delay_range=[1, 5])
     c.challenge_code_handler = challenge_code_handler
-    login(c, session_username, session_password, session_verification_code, session_settings_path)
+    login(c, session_username, session_password, session_settings_path)
 
     bot_url = os.getenv('BOT_URL')
     bot_token = os.getenv('BOT_TOKEN')
