@@ -118,7 +118,7 @@ def handle_exception(client: ig.Client, exc: Exception):
             old = client.get_settings()
             client.set_settings({})
             client.set_uuids(old['uuids'])
-            client.login(session_username, session_password)
+            client.login(session_username, session_password, verification_code=session_verification_code)
         client.dump_settings(session_settings_path)
 
 
