@@ -133,8 +133,9 @@ def change_password_handler(_username: str) -> str:
 
 def login(
         client: ig.Client,
-        session_username: str,
-        session_password: str,
+        username: str,
+        password: str,
+        verification_code: str,
         session_settings_path: Path,
 ):
     try:
@@ -150,7 +151,11 @@ def login(
             old_session = client.get_settings()
             client.set_settings({})
             client.set_uuids(old_session['uuids'])
-            client.login(session_username, session_password)
+            client.login(
+                username=username,
+                password=password,
+                verification_code=verification_code,
+            )
             client.dump_settings(session_settings_path)
 
         return
@@ -170,10 +175,11 @@ if __name__ == '__main__':
 
     session_username = os.getenv('IG_USERNAME')
     session_password = os.getenv('IG_PASSWORD')
+    session_verification_code = os.getenv('IG_VERIFICATION_CODE')
     session_settings_path = Path(os.getenv('IG_SETTINGS_PATH'))
 
     c = ig.Client(logger=log, delay_range=[1, 5])
-    login(c, session_username, session_password, session_settings_path)
+    login(c, session_username, session_password, session_verification_code, session_settings_path)
 
     bot_url = os.getenv('BOT_URL')
     bot_token = os.getenv('BOT_TOKEN')
