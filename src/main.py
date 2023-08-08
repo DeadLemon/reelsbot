@@ -110,27 +110,6 @@ async def youtube_inline_query_handler(update: Update, _: ContextTypes.DEFAULT_T
     )
 
 
-def handle_exception(client: ig.Client, exc: Exception):
-    if isinstance(exc, igexc.LoginRequired):
-        try:
-            client.relogin()
-        except igexc.ReloginAttemptExceeded:
-            old = client.get_settings()
-            client.set_settings({})
-            client.set_uuids(old['uuids'])
-            client.login(session_username, session_password, verification_code=session_verification_code)
-        client.dump_settings(session_settings_path)
-
-
-def change_password_handler(_username: str) -> str:
-    return ''.join(
-        [
-            random.choice(string.ascii_letters + string.digits)
-            for _ in range(10)
-        ]
-    )
-
-
 def login(
         client: ig.Client,
         username: str,
@@ -160,7 +139,11 @@ def login(
 
         return
 
-    client.login(username, password, verification_code=session_verification_code)
+    client.login(
+        username=username,
+        password=password,
+        verification_code=verification_code,
+    )
     client.dump_settings(session_settings_path)
 
 
