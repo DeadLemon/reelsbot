@@ -1,9 +1,7 @@
 import json
 import logging
 import os
-import random
 import re
-import string
 import uuid
 from pathlib import Path
 
@@ -114,7 +112,6 @@ def login(
         client: ig.Client,
         username: str,
         password: str,
-        verification_code: str,
         session_settings_path: Path,
 ):
     try:
@@ -133,7 +130,6 @@ def login(
             client.login(
                 username=username,
                 password=password,
-                verification_code=verification_code,
             )
             client.dump_settings(session_settings_path)
 
@@ -142,9 +138,12 @@ def login(
     client.login(
         username=username,
         password=password,
-        verification_code=verification_code,
     )
     client.dump_settings(session_settings_path)
+
+
+def challenge_code_handler(self, username: str, choice=None):
+    return session_verification_code
 
 
 if __name__ == '__main__':
@@ -162,6 +161,7 @@ if __name__ == '__main__':
     session_settings_path = Path(os.getenv('IG_SETTINGS_PATH'))
 
     c = ig.Client(logger=log, delay_range=[1, 5])
+    c.challenge_code_handler = challenge_code_handler
     login(c, session_username, session_password, session_verification_code, session_settings_path)
 
     bot_url = os.getenv('BOT_URL')
