@@ -112,10 +112,10 @@ def login(
         client: ig.Client,
         username: str,
         password: str,
-        session_settings_path: Path,
+        settings_path: Path,
 ):
     try:
-        session = c.load_settings(session_settings_path)
+        session = c.load_settings(settings_path)
     except (FileNotFoundError, json.JSONDecodeError):
         session = None
 
@@ -131,7 +131,7 @@ def login(
                 username=username,
                 password=password,
             )
-            client.dump_settings(session_settings_path)
+            client.dump_settings(settings_path)
 
         return
 
@@ -139,11 +139,7 @@ def login(
         username=username,
         password=password,
     )
-    client.dump_settings(session_settings_path)
-
-
-def challenge_code_handler(self, username: str, choice=None):
-    return session_verification_code
+    client.dump_settings(settings_path)
 
 
 if __name__ == '__main__':
@@ -157,11 +153,9 @@ if __name__ == '__main__':
 
     session_username = os.getenv('IG_USERNAME')
     session_password = os.getenv('IG_PASSWORD')
-    session_verification_code = os.getenv('IG_VERIFICATION_CODE')
     session_settings_path = Path(os.getenv('IG_SETTINGS_PATH'))
 
-    c = ig.Client(logger=log, delay_range=[1, 5])
-    c.challenge_code_handler = challenge_code_handler
+    c = ig.Client(logger=log, delay_range=[3, 6])
     login(c, session_username, session_password, session_settings_path)
 
     bot_url = os.getenv('BOT_URL')
