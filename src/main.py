@@ -75,10 +75,22 @@ async def youtube_inline_query_handler(update: Update, _: ContextTypes.DEFAULT_T
         update.effective_user.username,
         update.inline_query.query,
     )
+
+    answers = []
     try:
         yt = YouTube(update.inline_query.query)
-        stream = yt.streams.filter().get_highest_resolution()
-        video_url = stream.url
+        answers = [
+            InlineQueryResultVideo(
+                id=str(uuid.uuid4()),
+                video_url=stream.url,
+                mime_type=stream.mime_type,
+                thumb_url=yt.thumbnail_url,
+                title="[{}][{} mb] {}".format(stream.resolution, stream.filesize_mb, yt.title),
+                video_duration=yt.length,
+            )
+            for stream in yt.streams.filter(only_video=True, file_extension='mp4')
+            if stream.filesize_mb < 50
+        ]
     except Exception:
         log.exception(
             'youtube inline query failed, user_id=%s, username=%s, query=%s',
@@ -86,26 +98,8 @@ async def youtube_inline_query_handler(update: Update, _: ContextTypes.DEFAULT_T
             update.effective_user.username,
             update.inline_query.query,
         )
-        await update.inline_query.answer([], is_personal=True, cache_time=0)
-        return
 
-    await update.inline_query.answer(
-        [
-            InlineQueryResultVideo(
-                id=str(uuid.uuid4()),
-                video_url=video_url,
-                mime_type=stream.mime_type,
-                thumb_url=yt.thumbnail_url,
-                title=yt.title,
-                # caption=info.caption_text,
-                video_duration=yt.length,
-                # video_width=1080,
-                # video_height=1920,
-            )
-        ],
-        is_personal=True,
-        cache_time=0,
-    )
+    await update.inline_query.answer(answers, is_personal=True, cache_time=0)
 
 
 def login(
