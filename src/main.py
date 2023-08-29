@@ -165,6 +165,7 @@ if __name__ == '__main__':
     bot_url = os.getenv('BOT_URL')
     bot_token = os.getenv('BOT_TOKEN')
     bot_port = int(os.getenv('BOT_PORT'))
+    bot_use_polling = bool(int(os.getenv('BOT_USE_POLLING')))
 
     app = ApplicationBuilder().token(bot_token).build()
     app.add_handler(
@@ -179,9 +180,12 @@ if __name__ == '__main__':
             pattern=re.compile(r".*youtube\.com/shorts.*"),
         )
     )
-    app.run_webhook(
-        listen='0.0.0.0',
-        port=bot_port,
-        url_path=bot_token,
-        webhook_url='/'.join([bot_url, bot_token]),
-    )
+    if bot_use_polling:
+        app.run_polling()
+    else:
+        app.run_webhook(
+            listen='0.0.0.0',
+            port=bot_port,
+            url_path=bot_token,
+            webhook_url='/'.join([bot_url, bot_token]),
+        )
