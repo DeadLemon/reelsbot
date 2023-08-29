@@ -160,6 +160,7 @@ if __name__ == '__main__':
     c = ig.Client(logger=log, delay_range=[1, 3])
     c.set_proxy(proxy_dsn)
     login(c, session_username, session_password, session_settings_path)
+    log.warning("successfully logged in, username: %s", session_username)
 
     bot_url = os.getenv('BOT_URL')
     bot_token = os.getenv('BOT_TOKEN')
