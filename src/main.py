@@ -39,6 +39,7 @@ async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT
     try:
         pk = c.media_pk_from_url(update.inline_query.query)
         info = c.media_info_v1(pk)
+        log.warning("media info: %s", info.json())
     except Exception:
         log.exception(
             '[instagram][%s][%s] inline query failed: %s',
