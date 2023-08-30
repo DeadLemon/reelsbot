@@ -36,22 +36,11 @@ async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT
         update.inline_query.query,
     )
 
+    answers = []
     try:
         pk = c.media_pk_from_url(update.inline_query.query)
         info = c.media_info_v1(pk)
-        log.warning("media info: %s", info.json())
-    except Exception:
-        log.exception(
-            '[instagram][%s][%s] inline query failed: %s',
-            update.effective_user.id,
-            update.effective_user.username,
-            update.inline_query.query,
-        )
-        await update.inline_query.answer([], is_personal=True, cache_time=0)
-        return
-
-    await update.inline_query.answer(
-        [
+        answers = [
             InlineQueryResultVideo(
                 id=str(uuid.uuid4()),
                 video_url=info.video_url,
@@ -63,10 +52,17 @@ async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT
                 video_width=1080,
                 video_height=1920,
             )
-        ],
-        is_personal=True,
-        cache_time=0,
-    )
+        ]
+        log.warning("media info: %s", info.json())
+    except Exception:
+        log.exception(
+            '[instagram][%s][%s] inline query failed: %s',
+            update.effective_user.id,
+            update.effective_user.username,
+            update.inline_query.query,
+        )
+
+    await update.inline_query.answer(answers, is_personal=True, cache_time=0)
 
 
 async def youtube_inline_query_handler(update: Update, _: ContextTypes.DEFAULT_TYPE):
