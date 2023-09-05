@@ -29,38 +29,44 @@ log = logging.getLogger(__name__)
 
 
 async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT_TYPE):
+    whitelisted = (
+        whitelist_enabled and update.effective_user.id in whitelist
+    )
+
     log.warning(
-        '[instagram][%s][%s] inline query received: %s',
+        '[instagram][%s][%s][%s] inline query received: %s',
         update.effective_user.id,
         update.effective_user.username,
+        '✅'if whitelisted else '❌',
         update.inline_query.query,
     )
 
     answers = []
-    try:
-        pk = c.media_pk_from_url(update.inline_query.query)
-        info = c.media_info_v1(pk)
-        answers = [
-            InlineQueryResultVideo(
-                id=str(uuid.uuid4()),
-                video_url=info.video_url,
-                mime_type='video/mp4',
-                thumbnail_url=info.thumbnail_url,
-                title=info.title or c.media_code_from_pk(pk),
-                # caption=info.caption_text,
-                video_duration=int(float(info.video_duration)),
-                video_width=1080,
-                video_height=1920,
+    if whitelisted:
+        try:
+            pk = c.media_pk_from_url(update.inline_query.query)
+            info = c.media_info_v1(pk)
+            answers = [
+                InlineQueryResultVideo(
+                    id=str(uuid.uuid4()),
+                    video_url=info.video_url,
+                    mime_type='video/mp4',
+                    thumbnail_url=info.thumbnail_url,
+                    title=info.title or c.media_code_from_pk(pk),
+                    # caption=info.caption_text,
+                    video_duration=int(float(info.video_duration)),
+                    video_width=1080,
+                    video_height=1920,
+                )
+            ]
+            log.warning("media info: %s", info.json())
+        except Exception:
+            log.exception(
+                '[instagram][%s][%s] inline query failed: %s',
+                update.effective_user.id,
+                update.effective_user.username,
+                update.inline_query.query,
             )
-        ]
-        log.warning("media info: %s", info.json())
-    except Exception:
-        log.exception(
-            '[instagram][%s][%s] inline query failed: %s',
-            update.effective_user.id,
-            update.effective_user.username,
-            update.inline_query.query,
-        )
 
     await update.inline_query.answer(answers, is_personal=True, cache_time=0)
 
@@ -145,6 +151,12 @@ if __name__ == '__main__':
     session_username = os.getenv('IG_USERNAME')
     session_password = os.getenv('IG_PASSWORD')
     session_settings_path = Path(os.getenv('IG_SETTINGS_PATH'))
+
+    whitelist_enabled = bool(int(os.getenv('WHITELIST_ENABLED')))
+
+    whitelist = []
+    if whitelist_enabled:
+        whitelist = [int(item) for item in os.getenv('WHITELIST').split(',')]
 
     proxy_dsn = os.getenv('PROXY_DSN')
 
