@@ -34,7 +34,7 @@ async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT
     )
 
     log.warning(
-        '[instagram][%s][%s][%s] inline query received: %s',
+        '[instagram][%s][%s][%s ] inline query received: %s',
         update.effective_user.id,
         update.effective_user.username,
         '✅'if whitelisted else '❌',
@@ -59,7 +59,7 @@ async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT
                     video_height=1920,
                 )
             ]
-            log.warning("media info: %s", info.json())
+            log.debug("media info: %s", info.json())
         except Exception:
             log.exception(
                 '[instagram][%s][%s] inline query failed: %s',
