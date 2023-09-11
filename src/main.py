@@ -174,7 +174,7 @@ if __name__ == '__main__':
     app.add_handler(
         InlineQueryHandler(
             instagram_inline_query_handler,
-            pattern=re.compile(r".*instagram\.com/reel.*"),
+            pattern=re.compile(r".*instagram\.com/(p|reels).*"),
         )
     )
     app.add_handler(
