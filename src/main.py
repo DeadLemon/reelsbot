@@ -63,7 +63,7 @@ async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT
             cache_time=0,
         )
     except igexc.ClientError:
-        log.warning('[instagram][%s][%s] inline query failed', user_id, username, query)
+        log.warning('[instagram][%s][%s] inline query failed: %s', user_id, username, query)
 
 
 async def youtube_inline_query_handler(update: Update, _: ContextTypes.DEFAULT_TYPE):
