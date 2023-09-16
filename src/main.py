@@ -162,8 +162,6 @@ if __name__ == '__main__':
     if whitelist_enabled:
         whitelist = [int(item) for item in os.getenv('WHITELIST').split(',')]
 
-    proxy_dsn = os.getenv('PROXY_DSN')
-
     c = ig.Client(logger=log)
     login(c, session_username, session_password, session_settings_path)
     log.warning("successfully logged in, username: %s", session_username)
