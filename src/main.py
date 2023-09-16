@@ -4,7 +4,6 @@ import os
 import re
 import uuid
 from pathlib import Path
-from typing import Optional
 
 import humanize as hmz
 import instagrapi as ig
@@ -47,23 +46,13 @@ async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT
         await update.inline_query.answer([], is_personal=True)
         return
 
-    view_count: Optional[str] = (
-        f'👀{hmz.scientific(info.view_count or info.play_count, precision=2)}'
-        if info.view_count or info.play_count else
-        None
-    )
-
-    like_count: Optional[str] = (
-        f'❤️{hmz.scientific(info.like_count, precision=2)}'
-        if info.like_count else
-        None
-    )
-
-    comment_count: Optional[str] = (
-        f'💬{hmz.scientific(info.comment_count, precision=2)}'
-        if info.comment_count else
-        None
-    )
+    counters = ' '.join(
+        [counter for counter in [
+            f'👀{hmz.scientific(info.view_count or info.play_count, precision=2)}' if info.view_count or info.play_count else None,
+            f'❤️{hmz.scientific(info.like_count, precision=2)}' if info.like_count else None,
+            f'💬{hmz.scientific(info.comment_count, precision=2)}' if info.comment_count else None,
+        ] if counter]
+        )
 
     source = f'🔗https://instagram.com/reel/{info.code}'
 
@@ -75,7 +64,7 @@ async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT
                 mime_type='video/mp4',
                 thumbnail_url=info.thumbnail_url,
                 title=info.code,
-                caption=f'{view_count} {like_count} {comment_count}\n{source}',
+                caption=f'{counters}\n{source}',
                 video_duration=int(info.video_duration),
                 video_height=1920,
                 video_width=1080,
