@@ -4,7 +4,6 @@ import os
 import re
 import uuid
 from pathlib import Path
-import asyncio as aio
 
 import humanize as hmz
 import instagrapi as ig
@@ -22,6 +21,8 @@ from telegram.ext import (
     InlineQueryHandler,
 )
 
+from src.instagram import get_media_info_from_url
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s %(levelname)s %(name)s %(message)s',
@@ -34,37 +35,37 @@ reel_url_pattern = re.compile(r".*instagram\.com/(p|reel).*")
 
 async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT_TYPE):
     query, username, user_id = update.inline_query.query, update.effective_user.username, update.effective_user.id
+    log.warning('[instagram][%s][%s] inline query received: %s', user_id, username, query)
 
     if whitelist_enabled and user_id not in whitelist:
         await update.inline_query.answer([], is_personal=True)
+        return
 
-    log.warning('[instagram][%s][%s] inline query received: %s', user_id, username, query)
+    info = await get_media_info_from_url(c, query)
+    if not info:
+        await update.inline_query.answer([], is_personal=True)
+        return
 
-    pk = c.media_pk_from_url(update.inline_query.query)
-    try:
-        info = await aio.get_event_loop().run_in_executor(None, c.media_info, pk)
-        await update.inline_query.answer(
-            [
-                InlineQueryResultVideo(
-                    id=pk,
-                    video_url=info.video_url,
-                    mime_type='video/mp4',
-                    thumbnail_url=info.thumbnail_url,
-                    title=info.code,
-                    caption=f'👀{hmz.scientific(info.view_count, precision=2)} '
-                            f'❤️{hmz.scientific(info.like_count, precision=2)} '
-                            f'💬{hmz.scientific(info.comment_count, precision=2)}\n'
-                            f'🔗https://instagram.com/reel/{info.code}',
-                    video_duration=int(info.video_duration),
-                    video_height=1920,
-                    video_width=1080,
-                )
-            ],
-            is_personal=True,
-            cache_time=0,
-        )
-    except igexc.ClientError:
-        log.warning('[instagram][%s][%s] inline query failed: %s', user_id, username, query)
+    await update.inline_query.answer(
+        [
+            InlineQueryResultVideo(
+                id=f'{username}:{info.code}',
+                video_url=info.video_url,
+                mime_type='video/mp4',
+                thumbnail_url=info.thumbnail_url,
+                title=info.code,
+                caption=f'👀{hmz.scientific(info.view_count, precision=2)} '
+                        f'❤️{hmz.scientific(info.like_count, precision=2)} '
+                        f'💬{hmz.scientific(info.comment_count, precision=2)}\n'
+                        f'🔗https://instagram.com/reel/{info.code}',
+                video_duration=int(info.video_duration),
+                video_height=1920,
+                video_width=1080,
+            )
+        ],
+        is_personal=True,
+        cache_time=0,
+    )
 
 
 async def youtube_inline_query_handler(update: Update, _: ContextTypes.DEFAULT_TYPE):
@@ -157,7 +158,7 @@ if __name__ == '__main__':
     proxy_dsn = os.getenv('PROXY_DSN')
 
     c = ig.Client(logger=log)
-    login(c, session_username, session_password, session_settings_path)
+    # login(c, session_username, session_password, session_settings_path)
     log.warning("successfully logged in, username: %s", session_username)
 
     bot_url = os.getenv('BOT_URL')
