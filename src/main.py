@@ -42,7 +42,7 @@ async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT
 
     pk = c.media_pk_from_url(update.inline_query.query)
     try:
-        info = await aio.get_event_loop().run_in_executor(None, c.media_info_gql, pk)
+        info = await aio.get_event_loop().run_in_executor(None, c.media_info, pk)
         await update.inline_query.answer(
             [
                 InlineQueryResultVideo(
@@ -55,6 +55,7 @@ async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT
                             f'❤️{hmz.scientific(info.like_count, precision=2)} '
                             f'💬{hmz.scientific(info.comment_count, precision=2)}\n'
                             f'🔗https://instagram.com/reel/{info.code}',
+                    video_duration=int(info.video_duration),
                     video_height=1920,
                     video_width=1080,
                 )
