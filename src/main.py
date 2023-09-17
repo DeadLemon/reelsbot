@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import re
@@ -6,10 +5,7 @@ import uuid
 from pathlib import Path
 
 import humanize as hmz
-import instagrapi as ig
-import sentry_sdk as ss
 from dotenv import load_dotenv
-from instagrapi import exceptions as igexc
 from pytube import YouTube
 from telegram import (
     InlineQueryResultVideo,
@@ -21,7 +17,7 @@ from telegram.ext import (
     InlineQueryHandler,
 )
 
-from src.instagram import get_media_info_from_url
+from src.instagram import client as igc
 
 logging.basicConfig(
     level=logging.INFO,
@@ -41,7 +37,7 @@ async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT
         await update.inline_query.answer([], is_personal=True)
         return
 
-    info = await get_media_info_from_url(c, query)
+    info = await ic.get_media_info_from_url(query)
     if not info:
         await update.inline_query.answer([], is_personal=True)
         return
@@ -52,7 +48,7 @@ async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT
             f'❤️{hmz.scientific(info.like_count, precision=2)}' if info.like_count else None,
             f'💬{hmz.scientific(info.comment_count, precision=2)}' if info.comment_count else None,
         ] if counter]
-        )
+    )
 
     source = f'🔗https://instagram.com/reel/{info.code}'
 
@@ -109,62 +105,22 @@ async def youtube_inline_query_handler(update: Update, _: ContextTypes.DEFAULT_T
     await update.inline_query.answer(answers, is_personal=True, cache_time=0)
 
 
-def login(
-        client: ig.Client,
-        username: str,
-        password: str,
-        settings_path: Path,
-):
-    try:
-        session = c.load_settings(settings_path)
-    except (FileNotFoundError, json.JSONDecodeError):
-        session = None
-
-    if session:
-        client.set_settings(session)
-        try:
-            client.get_timeline_feed()
-        except igexc.LoginRequired:
-            old_session = client.get_settings()
-            client.set_settings({})
-            client.set_uuids(old_session['uuids'])
-            client.login(
-                username=username,
-                password=password,
-            )
-            client.dump_settings(settings_path)
-
-        return
-
-    client.login(
-        username=username,
-        password=password,
-    )
-    client.dump_settings(settings_path)
-
-
 if __name__ == '__main__':
     load_dotenv()
 
-    if sentry_dsn := os.getenv('SENTRY_DSN'):
-        ss.init(
-            dsn=sentry_dsn,
-            traces_sample_rate=1.0,
-        )
-
-    session_username = os.getenv('IG_USERNAME')
-    session_password = os.getenv('IG_PASSWORD')
-    session_settings_path = Path(os.getenv('IG_SETTINGS_PATH'))
+    ic = igc.Client(
+        username=os.getenv('USERNAME'),
+        password=os.getenv('PASSWORD'),
+        path=Path(os.getenv('PATH')),
+        proxy=os.getenv('PROXY'),
+    )
+    ic.warmup()
 
     whitelist_enabled = bool(int(os.getenv('WHITELIST_ENABLED')))
 
     whitelist = []
     if whitelist_enabled:
         whitelist = [int(item) for item in os.getenv('WHITELIST').split(',')]
-
-    c = ig.Client(logger=log)
-    login(c, session_username, session_password, session_settings_path)
-    log.warning("successfully logged in, username: %s", session_username)
 
     bot_url = os.getenv('BOT_URL')
     bot_token = os.getenv('BOT_TOKEN')
