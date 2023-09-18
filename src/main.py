@@ -108,10 +108,13 @@ async def youtube_inline_query_handler(update: Update, _: ContextTypes.DEFAULT_T
 if __name__ == '__main__':
     load_dotenv()
 
+    path = Path(os.getenv('SESSIONS_PATH'))
+    log.warning("using sessions from %s", path)
+
     ic = igc.Client(
         username=os.getenv('USERNAME'),
         password=os.getenv('PASSWORD'),
-        path=Path(os.getenv('PATH')),
+        path=path,
         proxy=os.getenv('PROXY'),
     )
     ic.warmup()

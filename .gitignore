@@ -281,4 +281,4 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-**/settings.json
+deploy/settings/*

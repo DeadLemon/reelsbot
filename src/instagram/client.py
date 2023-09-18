@@ -53,11 +53,12 @@ class Client:
         return await loop.run_in_executor(None, self._get_client_sync)
 
     def _get_client_sync(self) -> Optional[ig.Client]:
-        c = ig.Client()
+        c = ig.Client(logger=log)
 
         c.set_proxy(self.proxy)
 
         try:
+            log.warning("trying to use session file: %s", self.path )
             c.load_settings(self.path)
             c.get_timeline_feed()
             return c
@@ -73,6 +74,7 @@ class Client:
             self.path.touch()
 
         try:
+            log.warning("trying to login using credentials...")
             c.login(self.username, self.password)
             c.dump_settings(self.path)
         except igexc.ClientError:
@@ -88,18 +90,21 @@ class Client:
 
     async def get_media_info_from_url(self, url: str) -> Optional[igtypes.Media]:
         c = await self.get_client()
-        async with self._semaphore:
-            try:
-                return await aio.get_event_loop().run_in_executor(None, self._get_media_info_from_url, c, url)
-            except igexc.LoginRequired:
-                await self.invalidate_client()
-                return None
+        if not c:
+            log.error("failed to get client")
+            return None
 
-    @staticmethod
-    def _get_media_info_from_url(c: ig.Client, url: str) -> Optional[igtypes.Media]:
+        async with self._semaphore:
+            info = await aio.get_event_loop().run_in_executor(None, self._get_media_info_from_url, c, url)
+            if not info:
+                await self.invalidate_client()
+
+            return info
+
+    def _get_media_info_from_url(self, c: ig.Client, url: str) -> Optional[igtypes.Media]:
         pk = c.media_pk_from_url(url)
         try:
             return c.media_info_v1(pk)
         except igexc.ClientError:
-            log.error("failed to get media info")
+            log.error("failed to get media info", exc_info=True)
             return None
