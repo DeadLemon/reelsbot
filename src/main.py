@@ -23,6 +23,7 @@ logging.basicConfig(
     level=logging.WARN,
     format='%(asctime)s %(levelname)s %(name)s %(message)s',
 )
+logging.getLogger('https').setLevel(logging.CRITICAL)
 
 log = logging.getLogger(__name__)
 
