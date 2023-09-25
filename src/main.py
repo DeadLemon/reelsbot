@@ -20,7 +20,7 @@ from telegram.ext import (
 from src.instagram import client as igc
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.WARN,
     format='%(asctime)s %(levelname)s %(name)s %(message)s',
 )
 
