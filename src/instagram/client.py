@@ -106,5 +106,5 @@ class Client:
         try:
             return c.media_info_v1(pk)
         except igexc.ClientError:
-            log.error("failed to get media info", exc_info=True)
+            log.error("failed to get media info")
             return None
