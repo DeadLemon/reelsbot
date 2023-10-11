@@ -64,8 +64,8 @@ class Manager:
             log.error("failed to login: %s", exc)
             return None
 
-        log.warning("initializing client username=%s password=%s proxy=%s, path=%s",
-                    url, username, password, proxy, path)
+        log.warning("successfully initialized client username=%s password=%s proxy=%s, path=%s",
+                    username, password, proxy, path)
         return c
 
     async def get_media_info_from_url(self, url: str) -> igtypes.Media:
