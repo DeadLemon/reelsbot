@@ -1,14 +1,12 @@
-import asyncio
+import asyncio as aio
 import logging
 import os
 import re
 import uuid
 from pathlib import Path
-from urllib.parse import urlparse
-import asyncio as aio
+
 import humanize as hmz
 from dotenv import load_dotenv
-from instagrapi.types import Media
 from pytube import YouTube
 from telegram import (
     InlineQueryResultVideo,

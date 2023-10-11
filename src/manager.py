@@ -1,3 +1,4 @@
+import asyncio
 import asyncio as aio
 import json
 import logging
@@ -53,7 +54,6 @@ class Manager:
             c.dump_settings(path)
         except (FileNotFoundError, json.JSONDecodeError) as exc:
             log.error("failed to load session: %s", exc)
-            path.parent.mkdir(parents=True, exist_ok=True)
             path.touch()
 
         try:
@@ -76,14 +76,19 @@ class Manager:
 
     @asynccontextmanager
     async def _client(self) -> ig.Client:
-        log.warning("client waiting")
-        c: ig.Client = await self._clients.get()
-        log.warning("client acquired")
+        log.warning("trying to acquire client")
+
+        try:
+            c: ig.Client = await asyncio.wait_for(self._clients.get(), 1)
+        except asyncio.TimeoutError as exc:
+            log.error("failed to acquire client: %s", exc)
+            raise
+
+        log.warning("client acquired: %s", c.username)
         try:
             yield c
         except Exception:
-            log.error("error occurred while using client")
-            ...
+            log.error("error occurred while using client: %s", c.username)
         else:
-            log.warning("client returning")
+            log.warning("returning client to pool: %s", c.username)
             await self._clients.put(c)
