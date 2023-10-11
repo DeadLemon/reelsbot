@@ -1,11 +1,14 @@
+import asyncio
 import logging
 import os
 import re
 import uuid
 from pathlib import Path
-
+from urllib.parse import urlparse
+import asyncio as aio
 import humanize as hmz
 from dotenv import load_dotenv
+from instagrapi.types import Media
 from pytube import YouTube
 from telegram import (
     InlineQueryResultVideo,
@@ -17,7 +20,7 @@ from telegram.ext import (
     InlineQueryHandler,
 )
 
-from src.instagram import client as igc
+from src.manager import Manager
 
 logging.basicConfig(
     level=logging.WARN,
@@ -38,7 +41,7 @@ async def instagram_inline_query_handler(update: Update, _: ContextTypes.DEFAULT
         await update.inline_query.answer([], is_personal=True)
         return
 
-    info = await ic.get_media_info_from_url(query)
+    info = await mng.get_media_info_from_url(query)
     if not info:
         await update.inline_query.answer([], is_personal=True)
         return
@@ -110,15 +113,14 @@ if __name__ == '__main__':
     load_dotenv()
 
     path = Path(os.getenv('SESSIONS_PATH'))
-    log.warning("using sessions from %s", path)
 
-    ic = igc.Client(
-        username=os.getenv('USERNAME'),
-        password=os.getenv('PASSWORD'),
-        path=path,
-        proxy=os.getenv('PROXY'),
+    mng = Manager(path)
+    aio.get_event_loop().run_until_complete(
+        aio.gather(*[
+            mng.add_client_by_url(url)
+            for url in os.getenv('CLIENTS').split(';')
+        ])
     )
-    ic.warmup()
 
     whitelist_enabled = bool(int(os.getenv('WHITELIST_ENABLED')))
 
@@ -126,10 +128,7 @@ if __name__ == '__main__':
     if whitelist_enabled:
         whitelist = [int(item) for item in os.getenv('WHITELIST').split(',')]
 
-    bot_url = os.getenv('BOT_URL')
     bot_token = os.getenv('BOT_TOKEN')
-    bot_port = int(os.getenv('BOT_PORT'))
-    bot_use_polling = bool(int(os.getenv('BOT_USE_POLLING')))
 
     app = ApplicationBuilder().token(bot_token).build()
     app.add_handler(
@@ -144,12 +143,17 @@ if __name__ == '__main__':
             pattern=re.compile(r".*youtube\.com/shorts.*"),
         )
     )
-    if bot_use_polling:
-        app.run_polling()
-    else:
-        app.run_webhook(
-            listen='0.0.0.0',
-            port=bot_port,
-            url_path=bot_token,
-            webhook_url='/'.join([bot_url, bot_token]),
-        )
+    app.run_polling()
+
+    # bot_url = os.getenv('BOT_URL')
+    # bot_port = int(os.getenv('BOT_PORT'))
+    # bot_use_polling = bool(int(os.getenv('BOT_USE_POLLING')))
+
+    # if bot_use_polling:
+    # else:
+    #     app.run_webhook(
+    #         listen='0.0.0.0',
+    #         port=bot_port,
+    #         url_path=bot_token,
+    #         webhook_url='/'.join([bot_url, bot_token]),
+    #     )
